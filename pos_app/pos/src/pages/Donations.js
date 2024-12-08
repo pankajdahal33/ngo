@@ -16,8 +16,8 @@ const Donations = () => {
     const fetchDonations = async () => {
       try {
         const response = await axios.get(`${baseUrl}donations/`);
+        console.log('Fetched donations:', response.data);
         setDonations(response.data);
-        console.log(response.data);
       } catch (error) {
         console.error('Error fetching donations:', error);
       } finally {
@@ -42,7 +42,10 @@ const Donations = () => {
     setEditing(row.id);
     setFormData({ donor: row.donor.id, amount: row.amount, date: row.date, method: row.method, description: row.description });
   };
-
+  const getDonorNameById = (id) => {
+  const donor = donors.find(donor => donor.id === id);
+  return donor ? donor.name : 'Unknown';
+};
   const handleDelete = async (id) => {
     try {
       await axios.delete(`${baseUrl}donations/${id}/`);
@@ -76,7 +79,7 @@ const Donations = () => {
 
 const columns = [
     { name: 'ID', selector: row => row.id, sortable: true },
-    { name: 'Donor', selector: row => row.donor_name , sortable: true },
+    { name: 'Donor', selector: row => getDonorNameById(row.donor), sortable: true },
     { name: 'Amount', selector: row => row.amount, sortable: true },
     { name: 'Date', selector: row => row.date, sortable: true },
     { name: 'Method', selector: row => row.method, sortable: true },
