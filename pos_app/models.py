@@ -8,6 +8,8 @@ class Organization(models.Model):
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True, null=True)
     logo = models.ImageField(upload_to="logos/", blank=True, null=True)
+    pan_no= models.CharField(max_length=50, blank=True, null=True)
+    website= models.CharField(max_length=200,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -18,6 +20,8 @@ class Donor(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True, null=True)
+    pan_no= models.CharField(max_length=50, blank=True, null=True)
+
 
     def __str__(self):
         return self.name
@@ -27,6 +31,7 @@ class Donation(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField(auto_now_add=True)
     method = models.CharField(max_length=50, choices=[('Online', 'Online'), ('Cash', 'Cash')])
+    voucher = models.FileField(upload_to="vouchers/", blank=True, null=True)
     receipt_generated = models.BooleanField(default=False)
     receipt_number = models.CharField(max_length=20, blank=True, null=True)
 
@@ -42,6 +47,7 @@ class Program(models.Model):
     end_date = models.DateField(blank=True, null=True)
     total_budget = models.DecimalField(max_digits=15, decimal_places=2)
     expenses_incurred = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    aggrement = models.FileField(upload_to="agreements/", blank=True, null=True)
 
     def update_expenses(self, amount):
         self.expenses_incurred += amount
@@ -66,6 +72,7 @@ class Expense(models.Model):
     date = models.DateField(auto_now_add=True)
     description = models.TextField(blank=True, null=True)
     reversed = models.BooleanField(default=False)
+    bill = models.FileField(upload_to="bills/", blank=True, null=True)
 
 
 
