@@ -59,10 +59,7 @@ const Donors = () => {
     }
   };
 
-  const handleAddNew = () => {
-    setEditing(null);
-    setFormData({ name: '', email: '', phone: '', address: '', pan_no: '' });
-  };
+
 
   const filteredDonors = donors.filter(
     donor =>
@@ -93,7 +90,6 @@ const Donors = () => {
 
   return (
     <div className="container mt-4">
-      <button className="btn btn-sm btn-success mb-3" onClick={handleAddNew}>Add New Donor</button>
       {(editing !== null || editing === null) && (
         <div className="card mb-4">
           <div className="card-body">

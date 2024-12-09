@@ -66,6 +66,7 @@ const Donations = () => {
       description: row.description,
       voucher: null, // Reset file on edit
     });
+    
   };
 
   const handleView = (row) => {
@@ -209,10 +210,10 @@ const Donations = () => {
     printWindow.close();
   };
 
-  const getDonorNameById = (id) => {
-    const donor = donors.find((donor) => donor.id === id);
-    return donor ? donor.name : "Unknown";
-  };
+  // const getDonorNameById = (id) => {
+  //   const donor = donors.find((donor) => donor.id === id);
+  //   return donor ? donor.name : "Unknown";
+  // };
 
   const handleDelete = async (id) => {
     // confirm before deleting
@@ -266,6 +267,9 @@ const Donations = () => {
             donation.id === editing ? response.data : donation
           )
         );
+
+
+
       } else {
         // Create new donation
         response = await axios.post(`${baseUrl}donations/`, data, {
@@ -284,18 +288,24 @@ const Donations = () => {
         description: "",
         voucher: null,
       });
+      window.location.reload();
     } catch (error) {
-      console.error("Error saving donation:", error);
+      console.error("Error saving donation:", error.response.data);
       alert("There was an error saving the donation. Please try again.");
     }
   };
 
+  // const filteredDonations = donations.filter(
+  //   (donation) =>
+  //     donation.donor &&
+  //     getDonorNameById(donation.donor)
+  //       .toLowerCase()
+  //       .includes(filterText.toLowerCase())
+  // );
   const filteredDonations = donations.filter(
     (donation) =>
       donation.donor &&
-      getDonorNameById(donation.donor)
-        .toLowerCase()
-        .includes(filterText.toLowerCase())
+      donation.donor.name.toLowerCase().includes(filterText.toLowerCase())
   );
 
   const columns = [
@@ -452,7 +462,7 @@ const Donations = () => {
         </div>
       )}
       <div className="mb-3">
-        <input
+      <input
           type="text"
           className="form-control"
           placeholder="Search by Donor Name"

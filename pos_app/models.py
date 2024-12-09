@@ -34,11 +34,23 @@ class Donation(models.Model):
     voucher = models.FileField(upload_to="vouchers/", blank=True, null=True)
     receipt_generated = models.BooleanField(default=False)
     receipt_number = models.CharField(max_length=20, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            # current date and time
+            # use current date for  self.receipt_number
+            self.receipt_number = f"R-" + str(timezone.now().strftime("%Y%m%d%H%M%S"))
+            
+        super().save(*args, **kwargs)
 
     def generate_receipt(self):
         self.receipt_generated = True
         self.receipt_number = f"R{self.id}"
         self.save()
+
+    def __str__(self):
+        return f"Donation {self.id} by {self.donor.name}"
 
 class Program(models.Model):
     name = models.CharField(max_length=255)
