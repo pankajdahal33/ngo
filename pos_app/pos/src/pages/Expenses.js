@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const baseUrl = process.env.REACT_APP_BASE_API_URL;
 
@@ -137,6 +139,59 @@ const Expenses = () => {
     }
   };
 
+  const generateReport = (program) => {
+    const programExpenses = expenses.filter(expense => expense.program.id === program.id);
+    const totalExpenses = programExpenses.reduce((total, expense) => total + parseFloat(expense.amount || 0), 0);
+
+    const reportContent = `
+      <div class="container">
+        <h2 class="text-center mb-4">Program Report: ${program.name}</h2>
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Total Budget:</strong> Rs. ${program.total_budget}</p>
+            <p><strong>Start Date:</strong> ${program.start_date}</p>
+            <p><strong>End Date:</strong> ${program.end_date}</p>
+            <p><strong>Project Status:</strong> ${new Date(program.end_date) < new Date() ? 'Completed' : 'Ongoing'}</p>
+            <p><strong>Total Expenses:</strong> Rs. ${totalExpenses.toFixed(2)}</p>
+          </div>
+        </div>
+        <h3 class="mt-4">Expenses</h3>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${programExpenses.map(expense => `
+              <tr>
+                <td>${expense.title}</td>
+                <td>Rs. ${expense.amount}</td>
+                <td>${expense.date}</td>
+                <td>${expense.description}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const doc = new jsPDF();
+    const reportElement = document.createElement('div');
+    reportElement.innerHTML = reportContent;
+    document.body.appendChild(reportElement);
+
+    html2canvas(reportElement).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
+      doc.save(`${program.name}_report.pdf`);
+      document.body.removeChild(reportElement);
+    });
+  };
+
   const filteredExpenses = expenses.filter(
     (expense) =>
       expense.title.toLowerCase().includes(filterText.toLowerCase())
@@ -153,14 +208,6 @@ const Expenses = () => {
       name: "Actions",
       cell: (row) => (
         <div>
-          <a href={row.bill}
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-sm btn-primary me-2"
-            >
-            👁️
-        </a> 
-            
           <button
             className="btn btn-sm btn-primary me-2"
             onClick={() => handleEdit(row)}
@@ -172,6 +219,12 @@ const Expenses = () => {
             onClick={() => handleDelete(row.id)}
           >
             Delete
+          </button>
+          <button
+            className="btn btn-sm btn-secondary"
+            onClick={() => generateReport(row.program)}
+          >
+            📄
           </button>
         </div>
       ),

@@ -74,6 +74,12 @@ const Overview = () => {
     return donors.length;
   };
 
+  const calculateProgramExpenses = (programId) => {
+    return expenses
+      .filter(expense => expense.program.id === programId)
+      .reduce((total, expense) => total + parseFloat(expense.amount || 0), 0);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -139,6 +145,8 @@ const Overview = () => {
                 {programs.map((program) => (
                   <li key={program.id} className="list-group-item d-flex justify-content-between align-items-center">
                     {program.name}
+                    <span className="badge bg-secondary rounded-pill">Budget: Rs. {program.total_budget}</span>
+                    <span className="badge bg-info rounded-pill">Expenses: Rs. {calculateProgramExpenses(program.id).toFixed(2)}</span>
                     <span className={`badge ${new Date(program.end_date) < new Date() ? 'bg-success' : 'bg-warning'} rounded-pill`}>
                       {new Date(program.end_date) < new Date() ? 'Completed' : 'Ongoing'}
                     </span>
