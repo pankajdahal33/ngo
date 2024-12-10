@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 class Organization(models.Model):
     name = models.CharField(max_length=255)
@@ -33,6 +35,7 @@ class Donor(models.Model):
 class Donation(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name="donations")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    donation_purpose = models.CharField(max_length=255)
     date = models.DateField(auto_now_add=True)
     method = models.CharField(max_length=50, choices=[('Online', 'Online'), ('Cash', 'Cash')])
     voucher = models.FileField(upload_to="vouchers/", blank=True, null=True)
@@ -57,56 +60,50 @@ class Donation(models.Model):
 class Program(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Track updates
+
+    def __str__(self):
+        return self.name
+    
+class SubProgram(models.Model):
+    name = models.CharField(max_length=355)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name="subprograms")
+    description = models.TextField(blank=True, null=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
     total_budget = models.DecimalField(max_digits=15, decimal_places=2)
-    expenses_incurred = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     agreement = models.FileField(upload_to="agreements/", blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)    
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def update_expenses(self, amount):
-        self.expenses_incurred += amount
-        self.save()
 
     def __str__(self):
         return self.name
 
-
-class ProgramPerformance(models.Model):
-    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name="performances")
-    metric = models.CharField(max_length=255)
-    value = models.FloatField()
-    units = models.CharField(max_length=50, blank=True, null=True)  # To track units
-    date_recorded = models.DateTimeField(auto_now_add=True)  # Track time as well
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Track updates
 
     def __str__(self):
-        return f"{self.metric}: {self.value} {self.units}"
-
+        return self.name
 
 class Expense(models.Model):
-    program = models.ForeignKey('Program', on_delete=models.CASCADE, related_name="expenses")
+    program = models.ForeignKey('SubProgram', on_delete=models.CASCADE, related_name="expenses")
     title = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     date = models.DateField(auto_now_add=True)
     description = models.TextField(blank=True, null=True)
     reversed = models.BooleanField(default=False)
     bill = models.FileField(upload_to="bills/", blank=True, null=True)
-    category = models.CharField(max_length=50, choices=[('Supplies', 'Supplies'), ('Salaries', 'Salaries'), ('Miscellaneous', 'Miscellaneous')], default='Miscellaneous')
+    expanse_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="expenses")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Track updates
 
-    def save(self, *args, **kwargs):
-        if self.amount <= 0:
-            raise ValueError("Expense amount must be positive.")
-        super().save(*args, **kwargs)
-
+    
     def __str__(self):
         return self.title
-
-
-class ExportDetail(models.Model):
-    export_type = models.CharField(max_length=50, choices=[('Report', 'Report'), ('Analytics', 'Analytics')])
-    created_at = models.DateTimeField(auto_now_add=True)
-    file_path = models.FileField(upload_to="exports/")
-    exported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Track who exported
-
-    def __str__(self):
-        return self.export_type

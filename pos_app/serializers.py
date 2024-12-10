@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import  User, Organization, Donor, Donation, Expense, Program, ProgramPerformance
+from .models import  User, Organization, Donor, Donation, Expense, Program, SubProgram, Category
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,8 +31,14 @@ class ProgramSerializer(serializers.ModelSerializer):
         model = Program
         fields = '__all__'
 
-class ProgramPerformanceSerializer(serializers.ModelSerializer):
+class SubProgramSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ProgramPerformance
+        model = SubProgram
+        fields = '__all__'
+        depth = 1
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
         fields = '__all__'
 

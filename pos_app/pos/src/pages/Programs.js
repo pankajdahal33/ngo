@@ -1,24 +1,17 @@
-// src/components/Programs.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 const baseUrl = process.env.REACT_APP_BASE_API_URL;
 
 const Programs = () => {
   const [programs, setPrograms] = useState([]);
-  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    start_date: "",
-    end_date: "",
-    total_budget: "",
-    aggrement: null, // For storing file
+    is_active: true,
   });
   const [filterText, setFilterText] = useState("");
 
@@ -34,17 +27,7 @@ const Programs = () => {
       }
     };
 
-    const fetchExpenses = async () => {
-      try {
-        const response = await axios.get(`${baseUrl}expenses/`);
-        setExpenses(response.data);
-      } catch (error) {
-        console.error("Error fetching expenses:", error);
-      }
-    };
-
     fetchPrograms();
-    fetchExpenses();
   }, []);
 
   const handleEdit = (row) => {
@@ -52,15 +35,11 @@ const Programs = () => {
     setFormData({
       name: row.name,
       description: row.description,
-      start_date: row.start_date,
-      end_date: row.end_date,
-      total_budget: row.total_budget,
-      aggrement: null, // Reset file on edit
+      is_active: row.is_active,
     });
   };
 
   const handleDelete = async (id) => {
-    // confirm before deleting
     if (!window.confirm("Are you sure you want to delete this program?")) {
       return;
     }
@@ -76,116 +55,35 @@ const Programs = () => {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    // Log the current form data for debugging purposes
-    console.log("FormData before sending:", formData);
-
-    // Validate that the necessary fields are populated
-    if (!formData.name || !formData.start_date || !formData.end_date || !formData.total_budget) {
+    if (!formData.name || !formData.description) {
       alert("Please fill in all required fields.");
       return;
-    }
-
-    const data = new FormData();
-    data.append("name", formData.name);
-    data.append("description", formData.description);
-    data.append("start_date", formData.start_date);
-    data.append("end_date", formData.end_date);
-    data.append("total_budget", formData.total_budget);
-
-    // Only append aggrement if a file is selected
-    if (formData.aggrement) {
-      data.append("aggrement", formData.aggrement);
-    } else {
-      console.log("No aggrement file provided.");
     }
 
     try {
       let response;
       if (editing) {
-        // Update existing program
-        response = await axios.put(`${baseUrl}programs/${editing}/`, data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        response = await axios.put(`${baseUrl}programs/${editing}/`, formData);
         setPrograms(
           programs.map((program) =>
             program.id === editing ? response.data : program
           )
         );
       } else {
-        // Create new program
-        response = await axios.post(`${baseUrl}programs/`, data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        response = await axios.post(`${baseUrl}programs/`, formData);
         setPrograms([...programs, response.data]);
       }
       alert("Program saved successfully!");
-      // Reset the form
       setEditing(null);
       setFormData({
         name: "",
         description: "",
-        start_date: "",
-        end_date: "",
-        total_budget: "",
-        aggrement: null,
+        is_active: true,
       });
     } catch (error) {
       console.error("Error saving program:", error.response.data);
       alert("There was an error saving the program. Please try again.");
     }
-  };
-
-  const generateReport = (program) => {
-    const programExpenses = expenses.filter(expense => expense.program.id === program.id);
-    const totalExpenses = programExpenses.reduce((total, expense) => total + parseFloat(expense.amount || 0), 0);
-
-    const reportContent = `
-      <div class="container">
-        <h2 class="text-center mb-4">Program Report: ${program.name}</h2>
-        <div class="row">
-          <div class="col-md-6">
-            <p><strong>Total Budget:</strong> Rs. ${program.total_budget}</p>
-            <p><strong>Start Date:</strong> ${program.start_date}</p>
-            <p><strong>End Date:</strong> ${program.end_date}</p>
-            <p><strong>Project Status:</strong> ${new Date(program.end_date) < new Date() ? 'Completed' : 'Ongoing'}</p>
-            <p><strong>Total Expenses:</strong> Rs. ${totalExpenses.toFixed(2)}</p>
-          </div>
-        </div>
-        <h3 class="mt-4">Expenses</h3>
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${programExpenses.map(expense => `
-              <tr>
-                <td>${expense.title}</td>
-                <td>Rs. ${expense.amount}</td>
-                <td>${expense.date}</td>
-                <td>${expense.description}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    const doc = new jsPDF();
-    const reportElement = document.createElement('div');
-    reportElement.innerHTML = reportContent;
-    document.body.appendChild(reportElement);
-
-    html2canvas(reportElement).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
-      doc.save(`${program.name}_report.pdf`);
-      document.body.removeChild(reportElement);
-    });
   };
 
   const filteredPrograms = programs.filter(
@@ -196,9 +94,7 @@ const Programs = () => {
   const columns = [
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Description", selector: (row) => row.description, sortable: true },
-    { name: "Start Date", selector: (row) => row.start_date, sortable: true },
-    { name: "End Date", selector: (row) => row.end_date, sortable: true },
-    { name: "Total Budget", selector: (row) => 'Rs. ' + row.total_budget + ' /-', sortable: true },
+    { name: "Is Active", selector: (row) => (row.is_active ? "Yes" : "No"), sortable: true },
     {
       name: "Actions",
       cell: (row) => (
@@ -214,12 +110,6 @@ const Programs = () => {
             onClick={() => handleDelete(row.id)}
           >
             Delete
-          </button>
-          <button
-            className="btn btn-sm btn-secondary"
-            onClick={() => generateReport(row)}
-          >
-            📄
           </button>
         </div>
       ),
@@ -249,48 +139,6 @@ const Programs = () => {
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label">Total Budget</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    placeholder="Total Budget"
-                    value={formData.total_budget}
-                    onChange={(e) =>
-                      setFormData({ ...formData, total_budget: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="row mb-3">
-                <div className="col-md-6">
-                  <label className="form-label">Start Date</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    placeholder="Start Date"
-                    value={formData.start_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, start_date: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label">End Date</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    placeholder="End Date"
-                    value={formData.end_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, end_date: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="row mb-3">
-                <div className="col-md-6">
                   <label className="form-label">Description</label>
                   <input
                     type="text"
@@ -302,15 +150,16 @@ const Programs = () => {
                     }
                   />
                 </div>
+              </div>
+              <div className="row mb-3">
                 <div className="col-md-6">
-                  {/* Field for aggrement file upload */}
-                  <label className="form-label">Upload Aggrement</label>
+                  <label className="form-label">Is Active</label>
                   <input
-                    type="file"
-                    className="form-control"
-                    accept=".pdf,.jpg,.jpeg,.png,.heic"
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={formData.is_active}
                     onChange={(e) =>
-                      setFormData({ ...formData, aggrement: e.target.files[0] })
+                      setFormData({ ...formData, is_active: e.target.checked })
                     }
                   />
                 </div>

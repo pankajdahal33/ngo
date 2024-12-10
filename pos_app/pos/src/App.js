@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-// import React, { useState } from "react";
+// import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import Donors from "./pages/Donors";
 import Donations from "./pages/Donations";
 import Programs from "./pages/Programs";
+import SubPrograms from "./pages/SubPrograms";
 import Expenses from "./pages/Expenses";
 
 
@@ -24,16 +25,16 @@ function App() {
 
   useAutoLogout(300000); // Auto logout after 5 minutes of inactivity
 
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  // useEffect(() => {
+  //   const token = localStorage.getItem('access_token');
+  //   if (token) {
+  //     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-    } else {
-      navigate('/login');
-    }
+  //   } else {
+  //     navigate('/login');
+  //   }
 
-  }, [navigate]);
+  // }, [navigate]);
 
   const handleLinkClick = (link) => {
     setActiveLink(link);
@@ -88,6 +89,17 @@ function App() {
               onClick={() => handleLinkClick("programs")}
             >
               <i className="bi bi-gift me-2"></i> Program
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              className={`nav-link text-white ${
+                activeLink === "subPrograms" ? "active-link" : ""
+              }`}
+              to="/subPrograms"
+              onClick={() => handleLinkClick("subPrograms")}
+            >
+              <i className="bi bi-gift me-2"></i> Sub Program
             </Link>
           </li>
          
@@ -162,6 +174,7 @@ function App() {
           <Route path="/donors" element={<Donors />} />
           <Route path="/donations" element={<Donations />} />
           <Route path="/programs" element={<Programs />} />
+          <Route path="/subPrograms" element={<SubPrograms />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
