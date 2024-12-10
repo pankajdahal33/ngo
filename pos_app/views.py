@@ -12,13 +12,13 @@ from .serializers import OrganizationSerializer, DonorSerializer, DonationSerial
 class OrganizationViewSet(viewsets.ModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
-    # permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
+    permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
 
 
 class DonorViewSet(viewsets.ModelViewSet):
     queryset = Donor.objects.all()
     serializer_class = DonorSerializer
-    # permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
+    permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
     # add total_donations field to the response
     def list(self, request, *args, **kwargs):
         queryset = Donor.objects.all()
@@ -31,24 +31,14 @@ class DonorViewSet(viewsets.ModelViewSet):
                 total_donations += donation.amount
             data['total_donations'] = total_donations
             # count number of donations made by individual donor
-            data['donation_count'] = len(donations)
-            
-
-            
-
-
-
-
-
-            
-           
+            data['donation_count'] = len(donations)  
         return Response(serializer.data)
 
 
 class DonationViewSet(viewsets.ModelViewSet):
     queryset = Donation.objects.all()
     serializer_class = DonationSerializer
-    # permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
+    permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
 
     def list(self, request, *args, **kwargs):
         queryset = Donation.objects.all()
@@ -69,7 +59,7 @@ class DonationViewSet(viewsets.ModelViewSet):
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
-    # permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
+    permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
 
     def list(self, request, *args, **kwargs):
         queryset = Expense.objects.all()
@@ -90,7 +80,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 class ProgramViewSet(viewsets.ModelViewSet):
     queryset = Program.objects.all()
     serializer_class = ProgramSerializer
-    # permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
+    permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
 
     def list(self, request, *args, **kwargs):
         queryset = Program.objects.all()
@@ -101,7 +91,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
 class ProgramPerformanceViewSet(viewsets.ModelViewSet):
     queryset = ProgramPerformance.objects.all()
     serializer_class = ProgramPerformanceSerializer
-    # permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
+    permission_classes = [IsAuthenticated]  # Enable authentication for this viewset
 
     @db_transaction.atomic
     def create(self, request, *args, **kwargs):

@@ -1,5 +1,5 @@
-// import React, { useState, useEffect } from 'react';
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
+// import React, { useState } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -24,15 +24,16 @@ function App() {
 
   useAutoLogout(300000); // Auto logout after 5 minutes of inactivity
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem('access_token');
-  //   if (token) {
-  //     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  //   } else {
-  //     navigate('/login');
-  //   }
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+    } else {
+      navigate('/login');
+    }
 
-  // }, [navigate]);
+  }, [navigate]);
 
   const handleLinkClick = (link) => {
     setActiveLink(link);
@@ -142,6 +143,7 @@ function App() {
               <i className="bi bi-gear me-2"></i> Settings
             </Link>
           </li>
+         
           <li className="nav-item">
             <div
               className="nav-link text-white"
