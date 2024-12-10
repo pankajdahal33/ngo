@@ -157,7 +157,7 @@ const Donations = () => {
         </div>
         <div class="row">
           <div class="col-md-4">
-            <img src="${organization ? organization.logo : ''}" alt="Organization Logo" style="width: 150px; height: 150px;">
+            <img src="${organization ? organization.logo : 'https://wfn.org.np/storage/2023/09/wfn-logo.png'}" alt="Organization Logo" style="width: 150px; height: 150px;">
           </div>
           <div class="col-md-8">
           <p></p><strong>Donor Name:</strong> ${row.donor.name}</p>

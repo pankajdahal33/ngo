@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Bar } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const baseUrl = process.env.REACT_APP_BASE_API_URL;
 
@@ -74,15 +78,32 @@ const Overview = () => {
     return donors.length;
   };
 
-  const calculateProgramExpenses = (programId) => {
-    return expenses
-      .filter(expense => expense.program.id === programId)
-      .reduce((total, expense) => total + parseFloat(expense.amount || 0), 0);
+  const calculateTotalDonatedAmount = () => {
+    return donors.reduce((total, donor) => total + donor.total_donations, 0);
   };
 
   if (loading) {
     return <div>Loading...</div>;
   }
+
+  const chartData = {
+    labels: programs.map(program => program.name),
+    datasets: [
+      {
+        label: 'Total Budget',
+        data: programs.map(program => program.total_budget),
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+      },
+      {
+        label: 'Total Expenses',
+        data: programs.map(program => {
+          const programExpenses = expenses.filter(expense => expense.program.id === program.id);
+          return programExpenses.reduce((total, expense) => total + parseFloat(expense.amount || 0), 0);
+        }),
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+      },
+    ],
+  };
 
   return (
     <div className="container my-5">
@@ -135,6 +156,14 @@ const Overview = () => {
             </div>
           </div>
         </div>
+        <div className="col-md-3">
+          <div className="card text-center">
+            <div className="card-body">
+              <h5 className="card-title">Total Donated Amount</h5>
+              <p className="card-text">Rs. {calculateTotalDonatedAmount().toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
       </div>
       <div className="row gy-4 mt-4">
         <div className="col-md-12">
@@ -145,14 +174,24 @@ const Overview = () => {
                 {programs.map((program) => (
                   <li key={program.id} className="list-group-item d-flex justify-content-between align-items-center">
                     {program.name}
-                    <span className="badge bg-secondary rounded-pill">Budget: Rs. {program.total_budget}</span>
-                    <span className="badge bg-info rounded-pill">Expenses: Rs. {calculateProgramExpenses(program.id).toFixed(2)}</span>
+                    <span className="badge bg-secondary rounded-pill">Rs. {program.total_budget}</span>
+                    <span className="badge bg-info rounded-pill">Expenses: Rs. {calculateTotalExpenses().toFixed(2)}</span>
                     <span className={`badge ${new Date(program.end_date) < new Date() ? 'bg-success' : 'bg-warning'} rounded-pill`}>
                       {new Date(program.end_date) < new Date() ? 'Completed' : 'Ongoing'}
                     </span>
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="row gy-4 mt-4">
+        <div className="col-md-12">
+          <div className="card">
+            <div className="card-body">
+              <h5 className="card-title">Budget vs Expenses</h5>
+              <Bar data={chartData} />
             </div>
           </div>
         </div>

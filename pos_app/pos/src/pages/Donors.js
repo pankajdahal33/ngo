@@ -47,6 +47,9 @@ const Donors = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this donor?')) {
+      return;
+    }
     try {
       await axios.delete(`${baseUrl}donors/${id}/`);
       setDonors(donors.filter((donor) => donor.id !== id));
