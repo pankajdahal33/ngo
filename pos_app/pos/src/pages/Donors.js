@@ -1,4 +1,3 @@
-// src/components/DonorsTable.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
@@ -9,8 +8,15 @@ const baseUrl = process.env.REACT_APP_BASE_API_URL;
 const Donors = () => {
   const [donors, setDonors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', address: '', pan_no: '' });
+  const [editing, setEditing] = useState(null); // Keeps track of whether we are editing a donor
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    pan_no: '',
+    donor_type: 'Individual',
+  });
   const [filterText, setFilterText] = useState('');
 
   useEffect(() => {
@@ -30,13 +36,20 @@ const Donors = () => {
 
   const handleEdit = (row) => {
     setEditing(row.id);
-    setFormData({ name: row.name, email: row.email, phone: row.phone, address: row.address, pan_no: row.pan_no });
+    setFormData({
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      address: row.address,
+      pan_no: row.pan_no,
+      donor_type: row.donor_type,
+    });
   };
 
   const handleDelete = async (id) => {
     try {
       await axios.delete(`${baseUrl}donors/${id}/`);
-      setDonors(donors.filter(donor => donor.id !== id));
+      setDonors(donors.filter((donor) => donor.id !== id));
     } catch (error) {
       console.error('Error deleting donor:', error);
     }
@@ -45,24 +58,32 @@ const Donors = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
+      let response;
       if (editing) {
-        const response = await axios.put(`${baseUrl}donors/${editing}/`, formData);
-        setDonors(donors.map(donor => (donor.id === editing ? response.data : donor)));
+        response = await axios.put(`${baseUrl}donors/${editing}/`, formData);
+        setDonors(
+          donors.map((donor) => (donor.id === editing ? response.data : donor))
+        );
       } else {
-        const response = await axios.post(`${baseUrl}donors/`, formData);
+        response = await axios.post(`${baseUrl}donors/`, formData);
         setDonors([...donors, response.data]);
       }
-      setEditing(null);
-      setFormData({ name: '', email: '', phone: '', address: '', pan_no: '' });
+      setEditing(null); // Reset editing mode after save
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        pan_no: '',
+        donor_type: 'Individual',
+      });
     } catch (error) {
       console.error('Error saving donor:', error);
     }
   };
 
-
-
   const filteredDonors = donors.filter(
-    donor =>
+    (donor) =>
       (donor.name && donor.name.toLowerCase().includes(filterText.toLowerCase())) ||
       (donor.email && donor.email.toLowerCase().includes(filterText.toLowerCase())) ||
       (donor.phone && donor.phone.toLowerCase().includes(filterText.toLowerCase())) ||
@@ -71,18 +92,25 @@ const Donors = () => {
   );
 
   const columns = [
-    { name: 'ID', selector: row => row.id, sortable: true },
-    { name: 'Name', selector: row => row.name, sortable: true },
-    { name: 'Email', selector: row => row.email, sortable: true },
-    { name: 'Phone', selector: row => row.phone, sortable: true },
-    { name: 'Address', selector: row => row.address, sortable: true },
-    { name: 'Pan No', selector: row => row.pan_no, sortable: true },
+    { name: 'Name', selector: (row) => row.name, sortable: true },
+    { name: 'Email', selector: (row) => row.email, sortable: true },
+    { name: 'Phone', selector: (row) => row.phone, sortable: true },
+    { name: 'Address', selector: (row) => row.address, sortable: true },
+    { name: 'Pan No', selector: (row) => row.pan_no, sortable: true },
+    { name: 'Donor Type', selector: (row) => row.donor_type, sortable: true },
+    // total amount donated
+    { name: 'TDA', selector: (row) =>'Rs. '+ row.total_donations, sortable: true },
+
     {
       name: 'Actions',
-      cell: row => (
+      cell: (row) => (
         <div>
-          <button className="btn btn-sm btn-primary me-2" onClick={() => handleEdit(row)}>Edit</button>
-          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(row.id)}>Delete</button>
+          <button className="btn btn-sm btn-primary me-2" onClick={() => handleEdit(row)}>
+            Edit
+          </button>
+          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(row.id)}>
+            Delete
+          </button>
         </div>
       ),
     },
@@ -90,6 +118,12 @@ const Donors = () => {
 
   return (
     <div className="container mt-4">
+      {/* Add New Donor Button */}
+      {/* <button className="btn btn-success mb-3" onClick={() => setEditing(null)}>
+        Add New Donor
+      </button> */}
+
+      {/* Form for Add/Edit Donor */}
       {(editing !== null || editing === null) && (
         <div className="card mb-4">
           <div className="card-body">
@@ -148,28 +182,51 @@ const Donors = () => {
                     onChange={(e) => setFormData({ ...formData, pan_no: e.target.value })}
                   />
                 </div>
+                <div className="col-md-4">
+                  <label className="form-label">Donor Type</label>
+                  <select
+                    className="form-control"
+                    value={formData.donor_type}
+                    onChange={(e) => setFormData({ ...formData, donor_type: e.target.value })}
+                  >
+                    <option value="Individual">Individual</option>
+                    <option value="Corporate">Corporate</option>
+                  </select>
+                </div>
               </div>
-              <button type="submit" className="btn btn-primary me-2">{editing ? 'Save' : 'Add'}</button>
-              <button type="button" className="btn btn-secondary" onClick={() => setEditing(null)}>Cancel</button>
+              <button type="submit" className="btn btn-primary me-2">
+                {editing ? 'Save' : 'Add'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setEditing(null)}>
+                Cancel
+              </button>
             </form>
           </div>
         </div>
       )}
-      <div className="mb-3">
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search by Name, Email, Phone, Address, or Pan No"
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-        />
+
+      {/* Data Table with Donors */}
+      <div className="card">
+        <div className="card-body">
+          <input
+            type="text"
+            className="form-control mb-3"
+            placeholder="Search..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+          />
+          <DataTable
+            title="Donors List"
+            columns={columns}
+            data={filteredDonors}
+            progressPending={loading}
+            pagination
+            highlightOnHover
+            striped
+            responsive
+          />
+        </div>
       </div>
-      <DataTable
-        title="Donors"
-        columns={columns}
-        data={filteredDonors}
-        progressPending={loading}
-      />
     </div>
   );
 };

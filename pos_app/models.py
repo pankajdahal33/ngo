@@ -8,23 +8,27 @@ class Organization(models.Model):
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True, null=True)
     logo = models.ImageField(upload_to="logos/", blank=True, null=True)
-    pan_no= models.CharField(max_length=50, blank=True, null=True)
-    website= models.CharField(max_length=200,blank=True, null=True)
+    pan_no = models.CharField(max_length=50, blank=True, null=True)
+    website = models.CharField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Track updates
+    status = models.CharField(max_length=10, choices=[('Active', 'Active'), ('Inactive', 'Inactive')], default='Active')
 
     def __str__(self):
         return self.name
+
 
 class Donor(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True, null=True)
-    pan_no= models.CharField(max_length=50, blank=True, null=True)
-
+    pan_no = models.CharField(max_length=50, blank=True, null=True)
+    donor_type = models.CharField(max_length=20, choices=[('Individual', 'Individual'), ('Corporate', 'Corporate')], default='Individual')
 
     def __str__(self):
         return self.name
+
 
 class Donation(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name="donations")
@@ -38,19 +42,17 @@ class Donation(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.receipt_number:
-            # current date and time
-            # use current date for  self.receipt_number
-            self.receipt_number = f"R-" + str(timezone.now().strftime("%Y%m%d%H%M%S"))
-            
+            self.receipt_number = f"R{self.pk}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
         super().save(*args, **kwargs)
 
     def generate_receipt(self):
         self.receipt_generated = True
-        self.receipt_number = f"R{self.id}"
+        self.receipt_number = f"R{self.pk}"
         self.save()
 
     def __str__(self):
-        return f"Donation {self.id} by {self.donor.name}"
+        return f"Donation {self.pk} by {self.donor.name}"
+
 
 class Program(models.Model):
     name = models.CharField(max_length=255)
@@ -59,7 +61,8 @@ class Program(models.Model):
     end_date = models.DateField(blank=True, null=True)
     total_budget = models.DecimalField(max_digits=15, decimal_places=2)
     expenses_incurred = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    aggrement = models.FileField(upload_to="agreements/", blank=True, null=True)
+    agreement = models.FileField(upload_to="agreements/", blank=True, null=True)
+    is_active = models.BooleanField(default=True)
 
     def update_expenses(self, amount):
         self.expenses_incurred += amount
@@ -67,15 +70,18 @@ class Program(models.Model):
 
     def __str__(self):
         return self.name
-    
+
+
 class ProgramPerformance(models.Model):
     program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name="performances")
     metric = models.CharField(max_length=255)
     value = models.FloatField()
-    date_recorded = models.DateField(auto_now_add=True)
+    units = models.CharField(max_length=50, blank=True, null=True)  # To track units
+    date_recorded = models.DateTimeField(auto_now_add=True)  # Track time as well
 
     def __str__(self):
-        return f"{self.metric}: {self.value}"
+        return f"{self.metric}: {self.value} {self.units}"
+
 
 class Expense(models.Model):
     program = models.ForeignKey('Program', on_delete=models.CASCADE, related_name="expenses")
@@ -85,20 +91,22 @@ class Expense(models.Model):
     description = models.TextField(blank=True, null=True)
     reversed = models.BooleanField(default=False)
     bill = models.FileField(upload_to="bills/", blank=True, null=True)
+    category = models.CharField(max_length=50, choices=[('Supplies', 'Supplies'), ('Salaries', 'Salaries'), ('Miscellaneous', 'Miscellaneous')], default='Miscellaneous')
 
-
+    def save(self, *args, **kwargs):
+        if self.amount <= 0:
+            raise ValueError("Expense amount must be positive.")
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
-    
-
-
 
 
 class ExportDetail(models.Model):
     export_type = models.CharField(max_length=50, choices=[('Report', 'Report'), ('Analytics', 'Analytics')])
     created_at = models.DateTimeField(auto_now_add=True)
     file_path = models.FileField(upload_to="exports/")
+    exported_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Track who exported
 
     def __str__(self):
         return self.export_type

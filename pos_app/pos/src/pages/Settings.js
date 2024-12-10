@@ -9,8 +9,14 @@ const SettingsTable = () => {
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
-  const [formData, setFormData] = useState({ 
-    name: '', email: '', phone: '', address: '', logo: null, pan_no: '', website: '' 
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    logo: null,
+    pan_no: '',
+    website: '',
   });
 
   // Fetch settings on component mount
@@ -36,9 +42,9 @@ const SettingsTable = () => {
       email: row.email,
       phone: row.phone,
       address: row.address,
-      logo: row.logo ? row.logo : null,  // Ensure logo is set correctly
+      logo: row.logo || null,
       pan_no: row.pan_no,
-      website: row.website
+      website: row.website,
     });
   };
 
@@ -46,7 +52,7 @@ const SettingsTable = () => {
   const handleDelete = async (id) => {
     try {
       await axios.delete(`${baseUrl}organizations/${id}/`);
-      setSettings(settings.filter(setting => setting.id !== id));
+      setSettings(settings.filter((setting) => setting.id !== id));
     } catch (error) {
       console.error('Error deleting setting:', error);
     }
@@ -77,7 +83,9 @@ const SettingsTable = () => {
         response = await axios.put(`${baseUrl}organizations/${editing}/`, data, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        setSettings(settings.map(setting => (setting.id === editing ? response.data : setting)));
+        setSettings(
+          settings.map((setting) => (setting.id === editing ? response.data : setting))
+        );
       } else {
         // POST request to create
         response = await axios.post(`${baseUrl}organizations/`, data, {
@@ -87,7 +95,15 @@ const SettingsTable = () => {
       }
 
       setEditing(null);
-      setFormData({ name: '', email: '', phone: '', address: '', logo: null, pan_no: '', website: '' });
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        logo: null,
+        pan_no: '',
+        website: '',
+      });
     } catch (error) {
       console.error('Error saving setting:', error.response || error);
     }
@@ -95,23 +111,33 @@ const SettingsTable = () => {
 
   // Table columns
   const columns = [
-    { 
-      name: 'Logo', 
-      selector: row => <img src={row.logo} alt={row.name} style={{ width: '50px', height: '50px', objectFit: 'cover' }} />, 
-      sortable: true 
+    {
+      name: 'Logo',
+      selector: (row) => (
+        <img
+          src={row.logo || '/default-logo.png'} // default logo if not available
+          alt={row.name}
+          style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+        />
+      ),
+      sortable: true,
     },
-    { name: 'ID', selector: row => row.id, sortable: true },
-    { name: 'Name', selector: row => row.name, sortable: true },
-    { name: 'Email', selector: row => row.email, sortable: true },
-    { name: 'Phone', selector: row => row.phone, sortable: true },
-    { name: 'Pan No', selector: row => row.pan_no, sortable: true },
-    { name: 'Address', selector: row => row.address, sortable: true },
+    { name: 'ID', selector: (row) => row.id, sortable: true },
+    { name: 'Name', selector: (row) => row.name, sortable: true },
+    { name: 'Email', selector: (row) => row.email, sortable: true },
+    { name: 'Phone', selector: (row) => row.phone, sortable: true },
+    { name: 'Pan No', selector: (row) => row.pan_no, sortable: true },
+    { name: 'Address', selector: (row) => row.address, sortable: true },
     {
       name: 'Actions',
-      cell: row => (
+      cell: (row) => (
         <div>
-          <button className="btn btn-sm btn-primary me-2" onClick={() => handleEdit(row)}>Edit</button>
-          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(row.id)}>Delete</button>
+          <button className="btn btn-sm btn-primary me-2" onClick={() => handleEdit(row)}>
+            Edit
+          </button>
+          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(row.id)}>
+            Delete
+          </button>
         </div>
       ),
     },
@@ -125,7 +151,9 @@ const SettingsTable = () => {
       {(editing !== null || editing === null) && (
         <div className="card mb-4 shadow-sm">
           <div className="card-body">
-            <h4 className="card-title text-center mb-4">{editing ? 'Edit Organization' : 'Add New Organization'}</h4>
+            <h4 className="card-title text-center mb-4">
+              {editing ? 'Edit Organization' : 'Add New Organization'}
+            </h4>
             <form onSubmit={handleSave} encType="multipart/form-data">
               <div className="row mb-3">
                 <div className="col-md-4">
