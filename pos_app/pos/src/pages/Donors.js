@@ -99,17 +99,20 @@ const Donors = () => {
     { name: 'Pan No', selector: (row) => row.pan_no, sortable: true },
     { name: 'Donor Type', selector: (row) => row.donor_type, sortable: true },
     // total amount donated
+    { name: 'Count', selector: (row) => row.donation_count, sortable: true },
     { name: 'TDA', selector: (row) =>'Rs. '+ row.total_donations, sortable: true },
 
     {
       name: 'Actions',
       cell: (row) => (
         <div>
+      
+          
           <button className="btn btn-sm btn-primary me-2" onClick={() => handleEdit(row)}>
-            Edit
+            🖋️
           </button>
           <button className="btn btn-sm btn-danger" onClick={() => handleDelete(row.id)}>
-            Delete
+            🗑️
           </button>
         </div>
       ),

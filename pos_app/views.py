@@ -30,6 +30,10 @@ class DonorViewSet(viewsets.ModelViewSet):
             for donation in donations:
                 total_donations += donation.amount
             data['total_donations'] = total_donations
+            # count number of donations made by individual donor
+            data['donation_count'] = len(donations)
+            
+
             
 
 
